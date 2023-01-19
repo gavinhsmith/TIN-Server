@@ -14,8 +14,10 @@ const {getAllApps, getAppInfo, initApp} = require("./appLoader");
 express_app.use(bodyParser.urlencoded({ extended: true }));
 express_app.use(bodyParser.json());
 
+express_app.use(require("./tools/authenticator"));
+
 express_app.use(function (req, res, next) {
-    console.debug("Request to: " + req.url);
+    console.debug(`Request to ${req.path} (Authenticated: ${req.user === null ? "NO" : "YES [" + req.user.username + "]"})`)
     next();
 })
 
@@ -27,7 +29,9 @@ let apps = {};
 for (let app of app_names) {
     let info = getAppInfo(app);
     console.info(`Loading ${info.name} v${info.version}... (Endpoint: /${app})`);
-    express_app.use(`/${app}`, require(`./apps/${app}/router`));
+    express_app.use(`/${app}`, require(`./apps/${app}/router`)({
+        Response: require("./tools/response")
+    }));
     initApp(app);
     apps[app] = info;
 }

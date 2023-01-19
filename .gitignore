@@ -128,4 +128,5 @@ dist
 
 # Other
 
-apps/**/db/*
+apps/**/db/
+auth/
