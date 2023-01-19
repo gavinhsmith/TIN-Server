@@ -145,6 +145,26 @@ router.post("/register", function (req, res) {
     })
 })
 
+router.get("/users", function (req, res) {
+    fs.readFile("./auth/users.json", "utf-8", function (err, raw_users) {
+        if (err) {
+            new Response(String(err), 500).write(res);
+            res.end();
+        } else {
+            let full_users = JSON.parse(raw_users);
+            let cleaned = [];
 
+            for (let user of full_users) {
+                cleaned.push({
+                    username: user.username,
+                    uuid: user.uuid
+                })
+            }
+
+            new Response(cleaned).write(res);
+            res.end();
+        }
+    });
+})
 
 module.exports = router;

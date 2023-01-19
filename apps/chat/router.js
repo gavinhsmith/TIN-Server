@@ -16,10 +16,30 @@ function createRouter({Response}) {
             }
         })
     })
+
+    router.get("/messages/:user", function (req, res) {
+        fs.readFile("./apps/chat/db/messages.json", "utf-8", function (err, data) {
+            if (err) {
+                new Response(String(err), 500).write(res);
+                res.end();
+            } else {
+                let msgs = JSON.parse(data);
+                let sorted = [];
+                for (let msg of msgs) {
+                    if (msg.user === req.params.user) sorted.push(msg);
+                }
+                new Response(sorted).write(res);
+                res.end();
+            }
+        })
+    })
     
     router.post("/send", function (req, res) {
         if (req.body == null || req.body == undefined) {
             new Response(String(new Error("No body present")), 500).write(res);
+            res.end();
+        } else if (req.user === null) {
+            new Response(String(new Error("User not authenticated")), 403).write(res);
             res.end();
         } else {
             fs.readFile("./apps/chat/db/messages.json", "utf-8", function (err, data) {
@@ -27,18 +47,23 @@ function createRouter({Response}) {
                     new Response(String(err), 500).write(res);
                     res.end();
                 } else {
-                    fs.writeFile("./apps/chat/db/messages.json", JSON.stringify([...JSON.parse(data), req.body.message]), "utf-8", function (err) {
+                    let messages = [...JSON.parse(data), {
+                        user: req.user.uuid,
+                        content: req.body.message,
+                        timestamp: new Date().getTime()
+                    }];
+                    fs.writeFile("./apps/chat/db/messages.json", JSON.stringify(messages), "utf-8", function (err) {
                         if (err) {
                             new Response(String(err), 500).write(res);
                             res.end();
                         } else {
-                            new Response([...JSON.parse(data), req.body.message]).write(res);
+                            new Response(messages).write(res);
                             res.end();
                         }
                     })
                 }
             })
-        };
+        }
     })
 
     return router;
